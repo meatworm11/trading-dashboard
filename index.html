@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trading Journal Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f3;
+      --surface: #ffffff;
+      --surface-soft: #f9faf7;
+      --ink: #171916;
+      --muted: #626b64;
+      --faint: #8b948d;
+      --line: #dfe5de;
+      --line-strong: #c7d0c9;
+      --accent: #1f6f55;
+      --accent-2: #315f91;
+      --warn: #9b6b12;
+      --danger: #a64038;
+      --good: #277343;
+      --charcoal: #243029;
+      --shadow: 0 16px 46px rgba(28, 36, 30, .08);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: radial-gradient(circle at top left, rgba(31,111,85,.10), transparent 28rem), var(--bg); }
+    button, input { font: inherit; }
+    .shell { width: min(1740px, calc(100% - 28px)); margin: 0 auto; padding: 18px 0 34px; }
+    .hero {
+      min-height: 176px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+      gap: 18px;
+      align-items: end;
+      padding: 20px 0 18px;
+    }
+    .kicker { color: var(--accent); font-size: 12px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 7px 0 0; font-size: clamp(32px, 4vw, 54px); line-height: .98; letter-spacing: 0; }
+    .subtitle { max-width: 760px; margin-top: 11px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+    .toolbar { display: grid; gap: 10px; justify-items: end; }
+    .search {
+      width: min(460px, 100%);
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.9);
+      padding: 0 13px;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+    .tabs { display: flex; gap: 7px; justify-content: flex-end; flex-wrap: wrap; }
+    .tab {
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.78);
+      color: var(--charcoal);
+      padding: 0 11px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .tab.active { background: var(--charcoal); border-color: var(--charcoal); color: #fff; }
+    .metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .metric {
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #fff, #fbfcfa);
+      box-shadow: var(--shadow);
+      padding: 13px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric:before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--stripe, var(--accent)); }
+    .metric strong { display: block; font-size: 28px; line-height: 1; letter-spacing: 0; }
+    .metric span { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+    .metric small { display: block; margin-top: 7px; color: var(--faint); line-height: 1.25; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, .85fr); gap: 14px; align-items: start; }
+    .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, .82fr); gap: 14px; }
+    .side { display: grid; gap: 14px; }
+    .wide { grid-column: 1 / -1; }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff, var(--surface-soft));
+    }
+    h2 { margin: 0; font-size: 14px; letter-spacing: 0; }
+    .count { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .panel-body { padding: 12px; }
+    .stack { display: grid; gap: 9px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 11px;
+      transition: border-color .14s ease, box-shadow .14s ease, transform .14s ease;
+    }
+    .card:hover { border-color: var(--line-strong); box-shadow: 0 11px 26px rgba(28,36,30,.07); transform: translateY(-1px); }
+    .card.featured { background: linear-gradient(135deg, #26332d, #35473d); color: #fff; border-color: #26332d; }
+    .card.featured .muted, .card.featured .detail { color: rgba(255,255,255,.72); }
+    .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .ticker { font-size: 13px; font-weight: 900; letter-spacing: .05em; }
+    .title { margin-top: 6px; font-size: 14px; font-weight: 850; line-height: 1.28; }
+    .detail { margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.38; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 22px;
+      max-width: 100%;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #eef2ef;
+      color: #3e4942;
+      font-size: 11px;
+      font-weight: 850;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+    .pill.high, .pill.red { background: #f8e7e5; color: var(--danger); }
+    .pill.medium, .pill.gold { background: #fbefd9; color: var(--warn); }
+    .pill.green { background: #e6f2eb; color: var(--good); }
+    .pill.blue { background: #e7eff7; color: var(--accent-2); }
+    .positions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .position-card { min-height: 164px; display: grid; align-content: start; gap: 8px; }
+    .level-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 2px; }
+    .level { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-soft); padding: 7px; min-width: 0; }
+    .level span { display: block; color: var(--faint); font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+    .level strong { display: block; margin-top: 4px; font-size: 13px; overflow-wrap: anywhere; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { padding: 8px 9px; border-bottom: 1px solid var(--line); color: var(--faint); text-align: left; font-size: 11px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fbfcfa; }
+    .table-wrap { overflow-x: auto; }
+    .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .source { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; color: var(--muted); font-size: 12px; }
+    .source span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .notice { border-left: 4px solid var(--warn); border-radius: var(--radius); background: #fff9ed; color: #4f3b15; padding: 10px 11px; font-size: 13px; line-height: 1.38; }
+    .empty { color: var(--muted); font-size: 13px; padding: 8px 2px; }
+    .hidden { display: none !important; }
+    @media (max-width: 1320px) {
+      .layout, .main { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .positions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 18px, 1740px); padding-top: 10px; }
+      .hero { grid-template-columns: 1fr; min-height: 0; padding-top: 10px; }
+      .toolbar { justify-items: stretch; }
+      .tabs { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+      .tab { flex: 0 0 auto; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric { min-height: 86px; }
+      .positions { grid-template-columns: 1fr; }
+      .level-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      th:nth-child(n+5), td:nth-child(n+5) { display: none; }
+      .panel-body { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <div class="kicker">Trading Journal</div>
+        <h1>Decision dashboard</h1>
+        <div class="subtitle" id="subtitle"></div>
+      </div>
+      <div class="toolbar">
+        <input class="search" id="search" type="search" placeholder="Filter ticker, event, source, note">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-view="all">All</button>
+          <button class="tab" data-view="action">Action</button>
+          <button class="tab" data-view="portfolio">Portfolio</button>
+          <button class="tab" data-view="calendar">Calendar</button>
+          <button class="tab" data-view="research">Research</button>
+          <button class="tab" data-view="system">System</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="metrics" id="metrics"></section>
+
+    <div class="layout">
+      <div class="main">
+        <section class="panel wide" data-panel="action">
+          <div class="panel-head"><h2>Action Queue</h2><span class="count" id="queueCount"></span></div>
+          <div class="panel-body stack" id="queue"></div>
+        </section>
+
+        <section class="panel wide" data-panel="portfolio">
+          <div class="panel-head"><h2>Position Map</h2><span class="count" id="positionCount"></span></div>
+          <div class="panel-body positions" id="positions"></div>
+        </section>
+
+        <section class="panel" data-panel="action">
+          <div class="panel-head"><h2>Trigger Radar</h2><span class="count" id="triggerCount"></span></div>
+          <div class="panel-body" id="triggers"></div>
+        </section>
+
+        <section class="panel" data-panel="calendar">
+          <div class="panel-head"><h2>Planned Tranches</h2><span class="count" id="trancheCount"></span></div>
+          <div class="panel-body" id="tranches"></div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="panel" data-panel="calendar">
+          <div class="panel-head"><h2>Event Calendar</h2><span class="count" id="eventCount"></span></div>
+          <div class="panel-body" id="events"></div>
+        </section>
+
+        <section class="panel" data-panel="research">
+          <div class="panel-head"><h2>Latest Verdicts</h2><span class="count" id="verdictCount"></span></div>
+          <div class="panel-body" id="verdicts"></div>
+        </section>
+
+        <section class="panel" data-panel="research">
+          <div class="panel-head"><h2>Recent Vault Activity</h2><span class="count" id="fileCount"></span></div>
+          <div class="panel-body" id="files"></div>
+        </section>
+
+        <section class="panel" data-panel="system">
+          <div class="panel-head"><h2>System Freshness</h2><span class="count">inputs</span></div>
+          <div class="panel-body stack" id="system"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const data = {"generatedAt": "2026-05-15 23:15", "recentHours": 72, "watchlist": {"Core": [{"Ticker": "HNGE", "Company": "Hinge Health", "Why I Own It (brief)": "Digital healthcare platform, AI-powered MSK care"}, {"Ticker": "AMZN", "Company": "Amazon", "Why I Own It (brief)": "Cloud (AWS), AI infrastructure, e-commerce moat"}, {"Ticker": "IREN", "Company": "Iris Energy", "Why I Own It (brief)": "Bitcoin mining / AI data center infrastructure — see 2026-04-19 IREN thesis"}, {"Ticker": "NBIS", "Company": "Nebius", "Why I Own It (brief)": "Multi-tenant GPU cloud / hyperscaler-capex play — see NBIS-2026-04-30 / 2026-05-01 NBIS tranche 1 executed"}, {"Ticker": "CRWV", "Company": "CoreWeave", "Why I Own It (brief)": "GPU cloud / AI infrastructure pure play — see CRWV-2026-05-12 / 2026-05-12 CRWV tranche 1 executed"}], "Active": [{"Ticker": "BE", "Company": "Bloom Energy", "Why I'm Watching": "Fuel cells for data center power, AI energy play"}, {"Ticker": "CORZ", "Company": "Core Scientific", "Why I'm Watching": "Mining-to-AI data center conversion, Leopold thesis"}, {"Ticker": "CBRS", "Company": "Cerebras Systems", "Why I'm Watching": "IPO 2026-05-15 — alt-compute lane vs. NVDA, $20B OpenAI contract. Tier-2 during IPO week for halt/news/8-K coverage; revisit tier placement once trading settles."}], "Peripheral": [{"Ticker": "RKLB", "Company": "Rocket Lab", "Loose Interest": "Reusable-launch cost-collapse play, Musk-pattern vertical integration"}]}, "positions": [{"ticker": "HNGE", "company": "Hinge Health", "tier": "Core", "thesis": "Digital healthcare platform, AI-powered MSK care", "verdict": "HOLD", "verdictDate": "2026-05-11", "priceAtVerdict": "$54.74", "buy": "47", "trim": "62", "tranches": "3"}, {"ticker": "AMZN", "company": "Amazon", "tier": "Core", "thesis": "Cloud (AWS), AI infrastructure, e-commerce moat", "verdict": "HOLD", "verdictDate": "2026-05-10", "priceAtVerdict": "$272.68", "buy": "230", "trim": "", "tranches": "2"}, {"ticker": "IREN", "company": "Iris Energy", "tier": "Core", "thesis": "Bitcoin mining / AI data center infrastructure — see 2026-04-19 IREN thesis", "verdict": "HOLD", "verdictDate": "2026-05-07", "priceAtVerdict": "$56.85", "buy": "42", "trim": "77", "tranches": "2"}, {"ticker": "NBIS", "company": "Nebius", "tier": "Core", "thesis": "Multi-tenant GPU cloud / hyperscaler-capex play — see NBIS-2026-04-30 / 2026-05-01 NBIS tranche 1 executed", "verdict": "HOLD", "verdictDate": "2026-05-13", "priceAtVerdict": "$208.34", "buy": "170", "trim": "230", "tranches": "3"}, {"ticker": "CRWV", "company": "CoreWeave", "tier": "Core", "thesis": "GPU cloud / AI infrastructure pure play — see CRWV-2026-05-12 / 2026-05-12 CRWV tranche 1 executed", "verdict": "ADD", "verdictDate": "2026-05-12", "priceAtVerdict": "$102.94", "buy": "", "trim": "150", "tranches": "3"}, {"ticker": "BE", "company": "Bloom Energy", "tier": "Active", "thesis": "Fuel cells for data center power, AI energy play", "verdict": "WATCH", "verdictDate": "2026-05-03", "priceAtVerdict": "$290.52", "buy": "245", "trim": "", "tranches": "2"}, {"ticker": "CORZ", "company": "Core Scientific", "tier": "Active", "thesis": "Mining-to-AI data center conversion, Leopold thesis", "verdict": "WATCH", "verdictDate": "2026-05-07", "priceAtVerdict": "$22.36", "buy": "19", "trim": "30", "tranches": "3"}, {"ticker": "CBRS", "company": "Cerebras Systems", "tier": "Active", "thesis": "IPO 2026-05-15 — alt-compute lane vs. NVDA, $20B OpenAI contract. Tier-2 during IPO week for halt/news/8-K coverage; revisit tier placement once trading settles.", "verdict": "WATCH", "verdictDate": "2026-05-14", "priceAtVerdict": "$340.50", "buy": "185", "trim": "", "tranches": "2"}, {"ticker": "RKLB", "company": "Rocket Lab", "tier": "Peripheral", "thesis": "Reusable-launch cost-collapse play, Musk-pattern vertical integration", "verdict": "WATCH", "verdictDate": "2026-04-23", "priceAtVerdict": "$84.60", "buy": "62", "trim": "", "tranches": "0"}], "triggers": [{"Ticker": "BE", "Buy Below": "245", "Trim Above": "—", "Funded-by": "HNGE post-print rotation", "Prefer-over": "—", "Last Reviewed": "2026-05-03", "Note": "Mean analyst target zone post-Project-Jupiter; ~2.3 ATR pullback from $290 ATH. Resets stale $150 (pre-Oracle) anchor.", "Scope": "watchlist"}, {"Ticker": "CORZ", "Buy Below": "19", "Trim Above": "30", "Funded-by": "HNGE trim tranche 1", "Prefer-over": "—", "Last Reviewed": "2026-05-07", "Note": "Post-print reset — recent swing low + 50 DMA cluster; second-anchor binary unresolved. Trim @30 = Cantor target derisked.", "Scope": "watchlist"}, {"Ticker": "CRWV", "Buy Below": "—", "Trim Above": "150", "Funded-by": "—", "Prefer-over": "—", "Last Reviewed": "2026-05-13", "Note": "Buy Below 105 fired and executed — bought 10 sh @ $104.60 on 2026-05-12 (see 2026-05-12 CRWV tranche 1 executed). Trim Above 150 = analyst median post-Q1 revision. Next add governed by the $90 Conditional GTC tranche, not a standing Buy Below.", "Scope": "watchlist"}, {"Ticker": "IREN", "Buy Below": "42", "Trim Above": "77", "Funded-by": "cash", "Prefer-over": "CRWV, BE", "Last Reviewed": "2026-05-07", "Note": "Q3 FY26 print delivered May 7 with NVIDIA $3.4B contract + $2.1B equity warrant — second-hyperscaler condition fired, thesis structurally strengthened. Position now ~28-30% of portfolio at appreciated price (above 28% engineered cap from May 2 carve-out, but per override matrix winning + thesis intact = HOLD, not REDUCE). Trim ladder added: $77 (analyst median, light trim ~6 sh / 10%) and $90 (Bernstein-heading, heavier trim ~10 sh / 17%). Buy Below $42 stays as macro-reentry only — thesis is execution-phase, not active-DCA-phase.", "Scope": "watchlist"}, {"Ticker": "RKLB", "Buy Below": "62", "Trim Above": "—", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-04-24", "Note": "Bear FV band + 200 DMA + swing low + analyst-low cluster; promote Space Race to ticker note before entry", "Scope": "watchlist"}, {"Ticker": "AMZN", "Buy Below": "230", "Trim Above": "—", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-05-10", "Note": "Refreshed long-horizon anchor: 50/200 DMA + Jan 20 swing low cluster; Dip Buyer preset activates here (15.6% off ATH). Resets stale $235 to true cluster center.", "Scope": "watchlist"}, {"Ticker": "HNGE", "Buy Below": "47", "Trim Above": "62", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-05-11", "Note": "Buy 47 = 200 DMA + fwd-P/E bear FV ($46.84); Trim 62 = 52w high break + new base FV ($62.45). Resets stale $38/$58 from pre-rerate ladder.", "Scope": "watchlist"}, {"Ticker": "NBIS", "Buy Below": "170", "Trim Above": "230", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-05-13", "Note": "Refreshed post-Q1-2026-blowout-print: Buy 170 = 1.6 ATR fade + analyst mean target zone; Trim 230 = post-revision analyst-high zone (first thesis-confirmation trim). Replaces 5/4 conditional Trim 200.", "Scope": "watchlist"}, {"Ticker": "CBRS", "Buy Below": "185", "Trim Above": "—", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-05-14", "Note": "IPO floor entry — 2-3 sh starter for alt-compute optionality. Cohort-confirm before pulling.", "Scope": "watchlist"}, {"Ticker": "RIVN", "Buy Below": "12", "Trim Above": "—", "Funded-by": "—", "Prefer-over": "—", "Last Reviewed": "2026-04-23", "Note": "Conditional on R2 Q1 delivery proof + no ATM", "Source": "RIVN-2026-04-23", "Scope": "broader"}, {"Ticker": "EOSE", "Buy Below": "5.50", "Trim Above": "—", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-04-24", "Note": "Post-May-13 fade only; bear FV + analyst-low + swing-low cluster", "Source": "EOSE-2026-04-24", "Scope": "broader"}, {"Ticker": "APLD", "Buy Below": "30", "Trim Above": "—", "Funded-by": "cash", "Prefer-over": "RIVN", "Last Reviewed": "2026-05-07", "Note": "50 DMA + 200 DMA + bear FV cluster; macro-confirmed cohort-drawdown OR late-June Pre-Earnings window", "Source": "APLD-2026-05-07", "Scope": "broader"}, {"Ticker": "CIFR", "Buy Below": "15", "Trim Above": "—", "Funded-by": "post-May-5 HNGE rotation", "Prefer-over": "—", "Last Reviewed": "2026-04-20", "Note": "Post-May-5 print pullback; historical drawdown band + analyst-low cluster", "Source": "CIFR-2026-04-20", "Scope": "broader"}, {"Ticker": "NBIS", "Buy Below": "138", "Trim Above": "—", "Funded-by": "cash + post-May-5 HNGE rotation", "Prefer-over": "—", "Last Reviewed": "2026-04-30", "Note": "Tranche 1 starter at current; tranche 2 at 125-130 cohort-red dip — Q1 in-line print + $725B capex confirmation closed Apr 20 gates", "Source": "NBIS-2026-04-30", "Scope": "broader"}, {"Ticker": "TWST", "Buy Below": "48", "Trim Above": "67", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-05-15", "Note": "Trigger fired today on -8.54% drop; ADD verdict. Post-print thesis confirmed (rev accel, Q4 breakeven, AWS partnership). Tranche 2 at $43 swing-low cluster. Trim at $67 = bull-FV cap.", "Source": "TWST-2026-05-15", "Scope": "broader"}, {"Ticker": "TEM", "Buy Below": "43", "Trim Above": "—", "Funded-by": "post-HNGE-$62-trim rotation", "Prefer-over": "—", "Last Reviewed": "2026-05-13", "Note": "Refined to swing-low cluster post-mixed-print; clean-print $48 invalidated (50 DMA broke + HCW PT $95→$64, BTIG $90→$80, Baird $68→$59); SOTP fair ~$25–31 per First-Principles; sub-$40 = thesis re-evaluation", "Source": "TEM-2026-05-13", "Scope": "broader"}, {"Ticker": "LITE", "Buy Below": "650", "Trim Above": "—", "Funded-by": "post-May-5 HNGE rotation", "Prefer-over": "—", "Last Reviewed": "2026-04-28", "Note": "Post-May-5-print pullback only; Mar 30 swing low + below 50 DMA cluster; deeper-test starter at 558 (P/S bear)", "Source": "LITE-2026-04-28", "Scope": "broader"}, {"Ticker": "SNDK", "Buy Below": "800", "Trim Above": "—", "Funded-by": "post-May-5 HNGE rotation", "Prefer-over": "LITE, APLD, INTC", "Last Reviewed": "2026-04-30", "Note": "Cohort-confirmed cyclical-fear pullback only; 50 DMA + P/S bear cluster; behind AMZN GTCs and IREN Sweetwater", "Source": "SNDK-2026-04-30", "Scope": "broader"}, {"Ticker": "INTC", "Buy Below": "70", "Trim Above": "—", "Funded-by": "post-May-5 HNGE rotation", "Prefer-over": "LITE, APLD", "Last Reviewed": "2026-04-30", "Note": "Analyst-avg + P/S bear cluster + Bernstein/KeyBanc/Tigress zone; structural Leopold IIIb fit; deeper add at 55 (50 DMA) on cohort drawdown", "Source": "INTC-2026-04-30", "Scope": "broader"}, {"Ticker": "VIVO", "Buy Below": "3.00", "Trim Above": "—", "Funded-by": "cash", "Prefer-over": "—", "Last Reviewed": "2026-05-15", "Note": "50 DMA + recent swing-low cluster; conditional on open RFP still active + 0.5-1% Tier-3 sizing", "Source": "VIVO-2026-05-15", "Scope": "broader"}], "tranches": [{"Ticker": "BE", "Action": "Buy", "Size": "5–10% starter", "At Price": "245", "Expires": "2026-06-30", "Order": "Alert", "Note": "Mean analyst target zone; first Dip Buyer preset entry. Cohort-confirm per macro-cohort-confirmation before pulling trigger."}, {"Ticker": "BE", "Action": "Buy", "Size": "5–10% conviction add", "At Price": "215", "Expires": "2026-06-30", "Order": "Alert", "Note": "Top of P/S bear band ($203 + 1 ATR); requires broader risk-off (SPY −5%+ or BE-specific thesis-pause news). Cohort-confirm."}, {"Ticker": "CORZ", "Action": "Buy", "Size": "30 sh (~$570)", "At Price": "19", "Expires": "2026-07-15", "Order": "Alert", "Note": "Primary starter — recent swing low $19.56 (4/29) + 50 DMA $17.90 + analyst-low $20 cluster. Cohort-confirm before pulling per macro-cohort-confirmation."}, {"Ticker": "CORZ", "Action": "Buy", "Size": "25 sh (~$425)", "At Price": "17", "Expires": "2026-07-15", "Order": "Alert", "Note": "Second tranche — at 50 DMA + above 200 DMA $16.94, base P/S band $22.38 / bear $15.66; CRWV-stumble or cohort-pullback entry."}, {"Ticker": "CORZ", "Action": "Trim", "Size": "25% of pos", "At Price": "30", "Expires": "2026-09-30", "Order": "GTC", "Note": "Approaches Cantor $29 OW + bull P/S $31.31; trim into thesis-confirming rip if either ladder fires and stock subsequently re-rates."}, {"Ticker": "IREN", "Action": "Trim", "Size": "~6 shares", "At Price": "77", "Expires": "2026-08-15", "Order": "GTC", "Note": "First thesis-confirmation trim — analyst median target + bull P/S FV; light trim 10% of position; locks in ~$190/sh gain above cost basis, redeploys to NBIS or cash. From IREN-2026-05-07."}, {"Ticker": "IREN", "Action": "Trim", "Size": "~10 shares", "At Price": "90", "Expires": "2026-12-31", "Order": "GTC", "Note": "Second trim — Bernstein-heading + above bull FV; brings position back toward 18-22% portfolio weight after first trim has fired. From IREN-2026-05-07."}, {"Ticker": "AMZN", "Action": "Buy", "Size": "2 shares", "At Price": "258", "Expires": "2026-08-15", "Order": "Alert", "Note": "Tactical 2.1 ATR pullback; cohort-confirm per macro-cohort-confirmation before pulling (SPY flat-to-down, AI infra cohort not simultaneously red). Operationalizes feedback_pre_earnings_cohort_and_horizon lesson — tighter cohort-aware ladder."}, {"Ticker": "AMZN", "Action": "Buy", "Size": "4 shares", "At Price": "230", "Expires": "2026-12-31", "Order": "GTC", "Note": "High-conviction long-horizon — 50/200 DMA + Jan swing low cluster; Dip Buyer pattern activates here (+42d 72.7% win rate avg +7.9% historically). Brings position to 10sh / ~$2,520 cost / ~25% portfolio if it fills."}, {"Ticker": "HNGE", "Action": "Trim", "Size": "20 shares", "At Price": "62", "Expires": "2026-09-30", "Order": "GTC", "Note": "First post-rerate trim: 52w high break + new base FV ($62.45); 110→90"}, {"Ticker": "HNGE", "Action": "Trim", "Size": "20 shares", "At Price": "72", "Expires": "2026-09-30", "Order": "GTC", "Note": "Mid-rerate trim: new analyst median $70 + above bull P/S band ($76.85); 90→70"}, {"Ticker": "HNGE", "Action": "Trim", "Size": "20 shares", "At Price": "85", "Expires": "2026-12-31", "Order": "GTC", "Note": "Stretch trim: above new fwd-P/E bull FV ($78.06), midway between analyst mean ($70) and high ($95); 70→50 core"}, {"Ticker": "CRWV", "Action": "Buy", "Size": "5-7 sh (~$425-$595)", "At Price": "90", "Expires": "2026-08-15", "Order": "Conditional GTC", "Note": "Conviction add only if convert-pricing window prints strike below $120 OR cohort-weakness extends. Condition is open-ended; behaves as Alert until the convert pricing 8-K filing. From CRWV-2026-05-12."}, {"Ticker": "CRWV", "Action": "Trim", "Size": "5 sh", "At Price": "150", "Expires": "2026-12-31", "Order": "GTC", "Note": "First profit-take at refreshed analyst median ($125 → $150 post-print revision). Inside bull P/S band ($143.81) with buffer. From CRWV-2026-05-12."}, {"Ticker": "CRWV", "Action": "Trim", "Size": "8 sh", "At Price": "175", "Expires": "2027-03-31", "Order": "GTC", "Note": "Second trim — DA Davidson's $175 + Bernstein-revised-up zone. Requires either H2 op-income ramp printing OR third hyperscaler anchor (xAI / Apple). From CRWV-2026-05-12."}, {"Ticker": "NBIS", "Action": "Buy", "Size": "5 sh (~$850)", "At Price": "170", "Expires": "2026-07-31", "Order": "Alert", "Note": "Post-print fade entry — CRWV-pattern -18% capex-raise digestion zone OR analyst-mean-target re-entry. Cohort-confirm per macro-cohort-confirmation. Brings position to 9 sh / 14% portfolio = upper blank-slate band."}, {"Ticker": "NBIS", "Action": "Trim", "Size": "1 sh", "At Price": "230", "Expires": "2026-12-31", "Order": "GTC", "Note": "First thesis-confirmation trim — post-print median-revision zone (current mean $172 will likely revise to $210-230); ~1.5 ATR above 5/13 close. Locks in ~$91/sh gain, keeps 3 sh riding."}, {"Ticker": "NBIS", "Action": "Trim", "Size": "2 sh", "At Price": "270", "Expires": "2026-12-31", "Order": "GTC", "Note": "Second trim — heading into Goldman pre-print $291 zone; ~4.2 ATR above 5/13 close. Requires post-print revisions stack OR third-anchor announcement to fire. Keeps 1 sh structural insurance."}, {"Ticker": "CBRS", "Action": "Buy", "Size": "2 sh (~$370)", "At Price": "185", "Expires": "2026-08-15", "Order": "Alert", "Note": "First starter — IPO offer floor; cohort-confirm per macro-cohort-confirmation before pulling. Note: underwriter stabilization typically active first ~30 cal days, so a fill here is more likely after early June."}, {"Ticker": "CBRS", "Action": "Buy", "Size": "3 sh (~$450)", "At Price": "150", "Expires": "2026-11-30", "Order": "Alert", "Note": "Second tranche — raised-range midpoint zone; requires real give-back (lockup digestion start, Q2 miss, or macro selloff). Cohort-confirm. Position cap at ~5 sh / 3-4% of portfolio combined."}], "watchState": {"checked_at": "2026-04-28T18:17:53.052717+00:00", "watchlist_path": "vault\\watchlist.md", "label": "watchlist", "api_key_present": false, "price_sources_used": ["stooq"], "diagnostic": null, "total": 10, "fired": 2, "fired_tranches": 0, "armed": 1, "stale": 0, "expired_tranches": 0, "errors": 0, "results": [{"ticker": "BE", "type": "trigger", "label": "watchlist", "current_price": 226.91, "day_high": 239.61, "day_low": 216.04, "price_source": "stooq", "buy_below": 150.0, "trim_above": null, "last_reviewed": "2026-04-14", "days_since_review": 14, "funded_by": "HNGE rotation", "prefer_over": [], "deferred_due_to": [], "note": "Pre-Oracle-deal level; may be stale — revisit if BE pulls back from $220+", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "CORZ", "type": "trigger", "label": "watchlist", "current_price": 19.85, "day_high": 20.12, "day_low": 19.2, "price_source": "stooq", "buy_below": 17.0, "trim_above": null, "last_reviewed": "2026-04-24", "days_since_review": 4, "funded_by": null, "prefer_over": [], "deferred_due_to": [], "note": "Post-earnings entry on soft May 6 print or mining-drag weakness", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "CRWV", "type": "trigger", "label": "watchlist", "current_price": 107.29, "day_high": 110.0, "day_low": 103.19, "price_source": "stooq", "buy_below": 105.0, "trim_above": 150.0, "last_reviewed": "2026-04-24", "days_since_review": 4, "funded_by": "HNGE tranche 2+", "prefer_over": [], "deferred_due_to": [], "note": "Post-deal entry — 200 DMA + ATR anchor; thesis intact, geometry pricey", "status": "FIRED_BUY", "triggered_by": "intraday", "message": "Day low $103.19 <= buy trigger $105.00 (price now $107.29, rebounded)", "error": null}, {"ticker": "HNGE", "type": "trigger", "label": "watchlist", "current_price": 45.26, "day_high": 45.99, "day_low": 44.91, "price_source": "stooq", "buy_below": null, "trim_above": 45.0, "last_reviewed": "2026-04-16", "days_since_review": 12, "funded_by": null, "prefer_over": [], "deferred_due_to": [], "note": "Original rotation target; earnings May 5 may push past this", "status": "FIRED_TRIM", "triggered_by": "current", "message": "Price $45.26 >= trim trigger $45.00", "error": null}, {"ticker": "IREN", "type": "trigger", "label": "watchlist", "current_price": 43.89, "day_high": 46.74, "day_low": 43.53, "price_source": "stooq", "buy_below": 42.0, "trim_above": null, "last_reviewed": "2026-04-19", "days_since_review": 9, "funded_by": "HNGE trim tranche 1", "prefer_over": ["CRWV", "BE"], "deferred_due_to": [], "note": "Dip-buy level below current ~$48; ADD trigger if ATM filings <$500M", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "RKLB", "type": "trigger", "label": "watchlist", "current_price": 79.22, "day_high": 81.78, "day_low": 77.6, "price_source": "stooq", "buy_below": 62.0, "trim_above": null, "last_reviewed": "2026-04-24", "days_since_review": 4, "funded_by": "cash", "prefer_over": [], "deferred_due_to": [], "note": "Bear FV band + 200 DMA + swing low + analyst-low cluster; promote [[Space Race]] to ticker note before entry", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "HNGE", "type": "tranche", "label": "watchlist", "current_price": 45.26, "day_high": 45.99, "day_low": 44.91, "price_source": "stooq", "action": "Trim", "size": "20 shares", "at_price": 46.0, "expires": "2026-05-04", "order": "Alert", "note": "Tranche 2 momentum-trim — only if stock runs pre-print", "status": "ARMED", "triggered_by": null, "message": "1.6% below tranche trim level", "error": null}, {"ticker": "HNGE", "type": "tranche", "label": "watchlist", "current_price": 45.26, "day_high": 45.99, "day_low": 44.91, "price_source": "stooq", "action": "Buy", "size": "20 shares", "at_price": 37.0, "expires": "2026-05-12", "order": "Conditional GTC", "note": "Place GTC after May 5 print on beat-and-raise — overreaction entry", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "HNGE", "type": "tranche", "label": "watchlist", "current_price": 45.26, "day_high": 45.99, "day_low": 44.91, "price_source": "stooq", "action": "Trim", "size": "30 shares", "at_price": 52.0, "expires": "2026-05-12", "order": "Conditional GTC", "note": "Place GTC after May 5 print on beat — lock thesis win, fund rotation", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "IREN", "type": "tranche", "label": "watchlist", "current_price": 43.89, "day_high": 46.74, "day_low": 43.53, "price_source": "stooq", "action": "Buy", "size": "~12 sh (~$500)", "at_price": 42.0, "expires": "2026-05-15", "order": "Alert", "note": "Macro-drawdown ADD #2 — fires after ADD #1 (executed 2026-04-28) on continued cohort weakness; skip if Sweetwater delay 8-K or ATM >$500M; from [[IREN-2026-05-07-initial]]", "status": "IDLE", "triggered_by": null, "message": null, "error": null}]}, "broaderState": {"checked_at": "2026-04-28T18:18:11.513703+00:00", "watchlist_path": "vault\\price-triggers.md", "label": "broader", "api_key_present": false, "price_sources_used": ["stooq"], "diagnostic": null, "total": 9, "fired": 0, "fired_tranches": 0, "armed": 0, "stale": 0, "expired_tranches": 0, "errors": 0, "results": [{"ticker": "RIVN", "type": "trigger", "label": "broader", "current_price": 16.18, "day_high": 16.54, "day_low": 15.96, "price_source": "stooq", "buy_below": 12.0, "trim_above": null, "last_reviewed": "2026-04-23", "days_since_review": 5, "funded_by": null, "prefer_over": [], "deferred_due_to": [], "note": "Conditional on R2 Q1 delivery proof + no ATM", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "DGXX", "type": "trigger", "label": "broader", "current_price": 3.19, "day_high": 3.27, "day_low": 3.11, "price_source": "stooq", "buy_below": 2.4, "trim_above": 5.5, "last_reviewed": "2026-04-24", "days_since_review": 4, "funded_by": "cash lottery tranche", "prefer_over": ["IREN"], "deferred_due_to": [], "note": "P/S bear + swing-low cluster; cohort-red gate; lottery size 1–2%", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "EOSE", "type": "trigger", "label": "broader", "current_price": 6.79, "day_high": 7.01, "day_low": 6.66, "price_source": "stooq", "buy_below": 5.5, "trim_above": null, "last_reviewed": "2026-04-24", "days_since_review": 4, "funded_by": "cash", "prefer_over": [], "deferred_due_to": [], "note": "Post-May-13 fade only; bear FV + analyst-low + swing-low cluster", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "APLD", "type": "trigger", "label": "broader", "current_price": 31.42, "day_high": 32.84, "day_low": 30.51, "price_source": "stooq", "buy_below": 30.0, "trim_above": null, "last_reviewed": "2026-04-24", "days_since_review": 4, "funded_by": "post-May-5 HNGE rotation", "prefer_over": ["RIVN"], "deferred_due_to": [], "note": "50 DMA + 200 DMA + ATR cluster; macro-confirmed cohort-drawdown entry", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "CIFR", "type": "trigger", "label": "broader", "current_price": 16.96, "day_high": 17.6, "day_low": 16.48, "price_source": "stooq", "buy_below": 15.0, "trim_above": null, "last_reviewed": "2026-04-20", "days_since_review": 8, "funded_by": "post-May-5 HNGE rotation", "prefer_over": [], "deferred_due_to": [], "note": "Post-May-5 print pullback; historical drawdown band + analyst-low cluster", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "NBIS", "type": "trigger", "label": "broader", "current_price": 136.58, "day_high": 141.46, "day_low": 132.7, "price_source": "stooq", "buy_below": 130.0, "trim_above": null, "last_reviewed": "2026-04-20", "days_since_review": 8, "funded_by": "post-May-5 HNGE rotation", "prefer_over": [], "deferred_due_to": [], "note": "Post-Apr-29 print pullback or macro drawdown; ~50% P/S compression to mid-50s", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "TWST", "type": "trigger", "label": "broader", "current_price": 60.06, "day_high": 60.84, "day_low": 58.56, "price_source": "stooq", "buy_below": 48.0, "trim_above": null, "last_reviewed": "2026-04-26", "days_since_review": 2, "funded_by": "cash", "prefer_over": [], "deferred_due_to": [], "note": "Post-May-4-print pullback into bear-FV + 50 DMA + Apr-10 swing-low cluster; biotech starter, behind AI-infra names", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "TEM", "type": "trigger", "label": "broader", "current_price": 51.49, "day_high": 51.91, "day_low": 50.38, "price_source": "stooq", "buy_below": 48.0, "trim_above": null, "last_reviewed": "2026-04-26", "days_since_review": 2, "funded_by": "post-May-5 HNGE rotation", "prefer_over": [], "deferred_due_to": [], "note": "Post-May-5-print clean-result entry; second tranche at $43 swing-low cluster on soft print; data-moat thesis", "status": "IDLE", "triggered_by": null, "message": null, "error": null}, {"ticker": "LITE", "type": "trigger", "label": "broader", "current_price": 790.6, "day_high": 842.0, "day_low": 780.48, "price_source": "stooq", "buy_below": 650.0, "trim_above": null, "last_reviewed": "2026-04-28", "days_since_review": 0, "funded_by": "post-May-5 HNGE rotation", "prefer_over": [], "deferred_due_to": [], "note": "Post-May-5-print pullback only; Mar 30 swing low + below 50 DMA cluster; deeper-test starter at 558 (P/S bear)", "status": "IDLE", "triggered_by": null, "message": null, "error": null}]}, "triggerSnapshotsFresh": {"watchlist": false, "broader": false}, "ipo": [{"Ticker": "CBRS", "Company": "Cerebras Systems", "Expected Date": "2026-05-15", "Range": "$115–$125", "Lead UW": "Morgan Stanley / Citigroup / Barclays / UBS", "Sector": "AI infra (compute)", "Thesis Fit": "High — alt-compute lane vs. NVDA, $20B OpenAI contract anchor (750 MW through 2028)", "Status": "quiet-period", "Skill Run": "none", "Source": "wiki-2026-W19 (S-1/A May 4 2026: 28M shares + 4.2M overallotment, $3.5B raise high-end, $26.6B implied valuation, NASDAQ CBRS; began trading 2026-05-15, day-1 +84%)"}, {"Ticker": "TBD", "Company": "Anthropic", "Expected Date": "2026-10", "Range": "TBD", "Lead UW": "Goldman Sachs / JPMorgan / Morgan Stanley (preliminary)", "Sector": "AI orchestration", "Thesis Fit": "Medium-High — relevant to AMZN ~$33B stake + orchestration-vs-substrate; reads on AWS/Trainium dependency in S-1", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W18 (AInvest Mar 27 2026: Oct 2026 target, $60B+ raise, $380B Feb valuation, $50B data-center build use of proceeds)"}, {"Ticker": "TBD", "Company": "SpaceX", "Expected Date": "2026-H2", "Range": "TBD", "Lead UW": "TBD", "Sector": "Space / launch", "Thesis Fit": "Medium — Space Race thesis waits for this; not AI-infra but explicit watchlist anchor", "Status": "30+ days out", "Skill Run": "none", "Source": "Manual seed 2026-05-02 + wiki-2026-W18 (mid-to-late 2026 target, ~$1.75–2T expected valuation; no firm pricing yet)"}, {"Ticker": "TBD", "Company": "Nscale", "Expected Date": "2026-H2", "Range": "TBD", "Lead UW": "Goldman Sachs / JPMorgan", "Sector": "AI infra (GPU cloud)", "Thesis Fit": "High — NVIDIA-backed, no hyperscaler deal yet, CoreWeave-lane pre-deal profile; IPO creates public wait-for-deal entry", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W19 (March 2026: $14.6B valuation; GS + JPM engaged; 2H 2026 IPO target; Crunchbase 2026 IPO list)"}, {"Ticker": "TBD", "Company": "Lambda Labs", "Expected Date": "2026-H2", "Range": "TBD", "Lead UW": "TBD", "Sector": "AI infra (GPU cloud)", "Thesis Fit": "High — CoreWeave-lane pre-deal profile; NVIDIA-integrated; no named hyperscaler anchor yet; IPO creates public wait-for-deal entry", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W19 ($5.9B valuation after Nov 2025 Series E; H2 2026 IPO target reported; 10,000+ research team users; GPU cloud, deep NVIDIA integration; closest structural analogue to CRWV pre-IPO)"}, {"Ticker": "TBD", "Company": "Crusoe Energy", "Expected Date": "2026-Q4", "Range": "TBD", "Lead UW": "Goldman Sachs (reportedly)", "Sector": "AI infra (compute + power)", "Thesis Fit": "High — \"AI factory\" model owning both GPU compute and power layers; 900 MW Microsoft Abilene TX campus confirmed; reportedly OpenAI customer; integrated lane distinct from pure GPU cloud or pure power plays", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W20 (Series E $1.375B at >$10B valuation Oct 2025; Mar 2026 Axios: targeting $40B valuation, GS engaged; Michael Gordon ex-MongoDB IPO CFO joined Dec 2025; Q4 2026 IPO target; sources: dealroom.net, accessipos.com, sacra.com)"}, {"Ticker": "TBD", "Company": "VoltaGrid", "Expected Date": "TBD", "Range": "TBD", "Lead UW": "TBD", "Sector": "AI infra (power)", "Thesis Fit": "High — power-constrained data center thesis; gas microgrid lane", "Status": "30+ days out", "Skill Run": "none", "Source": "Manual seed 2026-04-25 + wiki-2026-W18 (Bloomberg Feb 24 2026: weighing IPO or sale; BX/BLK among bidders; ~$10B+ valuation; $5B financing closed; 4.3GW contracted plan through 2028)"}, {"Ticker": "TBD", "Company": "Fervo Energy", "Expected Date": "TBD", "Range": "TBD", "Lead UW": "TBD", "Sector": "AI infra (power)", "Thesis Fit": "High — geothermal 24/7 firm clean power; pursuing multi-GW hyperscaler offtake; 658MW PPAs already signed", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W18 (S-1 filed; 500MW Cape Station first power late 2026; permits for 1.5GW additional; SCE + Shell PPA anchors)"}, {"Ticker": "TBD", "Company": "QumulusAI", "Expected Date": "TBD", "Range": "TBD", "Lead UW": "TBD", "Sector": "AI infra (GPU cloud)", "Thesis Fit": "Medium — wait-for-deal lane; behind-the-meter gas / 21k Blackwell GPU target by EOY 2026; pre-IPO, no named hyperscaler contract yet", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W18 (Apr 28 2026: $45M ATW convertible note on top of $500M Permian Labs / USD.AI blockchain-backed financing; targeting 100MW behind-the-meter natural gas)"}, {"Ticker": "TBD", "Company": "X-energy", "Expected Date": "TBD", "Range": "TBD", "Lead UW": "TBD", "Sector": "AI infra (nuclear power)", "Thesis Fit": "Medium-High — Amazon 960 MW anchor (~$50B); advanced SMR commercialization; IPO path likely post-Amazon de-risk; first power ~2029–2030", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W19 (IAEA Bulletin + IEEE Spectrum 2026; Amazon–X-energy partnership confirmed)"}, {"Ticker": "TBD", "Company": "Verda (formerly DataCrunch)", "Expected Date": "TBD", "Range": "TBD", "Lead UW": "TBD", "Sector": "AI infra (GPU cloud / EU sovereign)", "Thesis Fit": "High — NVIDIA Preferred Partner; Nordic clean power; pre-hyperscaler-deal EU sovereign AI lane; CoreWeave-lane in Europe", "Status": "30+ days out", "Skill Run": "none", "Source": "wiki-2026-W19 (Apr 24 2026: €100M / $117M raise led by Lifeline Ventures; cash-flow positive; $60M+ revenue run-rate; 100% Nordic hydro power; expanding to UK/US; no named hyperscaler deal yet)"}], "earnings": [{"ticker": "HNGE", "print_date": "2026-05-05", "trading_days_until": 5, "calendar_days_until": 7, "has_pre_earnings_file": true, "pre_earnings_file": "HNGE-2026-05-05-initial", "pre_earnings_mode": "initial"}, {"ticker": "IREN", "print_date": "2026-05-07", "trading_days_until": 7, "calendar_days_until": 9, "has_pre_earnings_file": true, "pre_earnings_file": "IREN-2026-05-07-initial", "pre_earnings_mode": "initial"}], "verdicts": [{"Date": "2026-05-15", "Ticker": "TWST", "Verdict": "ADD", "Price at verdict": "$48.43", "Deep-dive file": "TWST-2026-05-15"}, {"Date": "2026-05-15", "Ticker": "VIVO", "Verdict": "WATCH", "Price at verdict": "$4.54", "Deep-dive file": "VIVO-2026-05-15"}, {"Date": "2026-05-14", "Ticker": "CBRS", "Verdict": "WATCH", "Price at verdict": "$340.50", "Deep-dive file": "CBRS-2026-05-14"}, {"Date": "2026-05-13", "Ticker": "TEM", "Verdict": "WATCH", "Price at verdict": "$46.23", "Deep-dive file": "TEM-2026-05-13"}, {"Date": "2026-05-13", "Ticker": "NBIS", "Verdict": "HOLD", "Price at verdict": "$208.34", "Deep-dive file": "NBIS-2026-05-13"}, {"Date": "2026-05-12", "Ticker": "CRWV", "Verdict": "ADD", "Price at verdict": "$102.94", "Deep-dive file": "CRWV-2026-05-12"}, {"Date": "2026-05-11", "Ticker": "HNGE", "Verdict": "HOLD", "Price at verdict": "$54.74", "Deep-dive file": "HNGE-2026-05-12"}, {"Date": "2026-05-10", "Ticker": "AMZN", "Verdict": "HOLD", "Price at verdict": "$272.68", "Deep-dive file": "AMZN-2026-05-10"}, {"Date": "2026-05-07", "Ticker": "CORZ", "Verdict": "WATCH", "Price at verdict": "$22.36", "Deep-dive file": "CORZ-2026-05-07"}, {"Date": "2026-05-07", "Ticker": "IREN", "Verdict": "HOLD", "Price at verdict": "$56.85", "Deep-dive file": "IREN-2026-05-07"}, {"Date": "2026-05-07", "Ticker": "APLD", "Verdict": "WATCH", "Price at verdict": "$41.53", "Deep-dive file": "APLD-2026-05-07"}, {"Date": "2026-05-03", "Ticker": "HNGE", "Verdict": "HOLD", "Price at verdict": "$45.43", "Deep-dive file": "HNGE-2026-05-03"}], "verdictDrift": [{"ticker": "NBIS", "verdict": "WATCH", "verdict_date": "2026-04-20", "age_days": 8, "price_at_verdict": 158.59, "current_price": 136.58, "drift_pct": -13.9, "direction": "down", "deep_dive_file": "NBIS-2026-04-20"}, {"ticker": "CRWV", "verdict": "WATCH", "verdict_date": "2026-04-22", "age_days": 6, "price_at_verdict": 124.25, "current_price": 107.24, "drift_pct": -13.7, "direction": "down", "deep_dive_file": "CRWV-2026-04-22"}, {"ticker": "CIFR", "verdict": "WATCH", "verdict_date": "2026-04-20", "age_days": 8, "price_at_verdict": 19.18, "current_price": 16.96, "drift_pct": -11.5, "direction": "down", "deep_dive_file": "CIFR-2026-04-20"}, {"ticker": "EOSE", "verdict": "WATCH", "verdict_date": "2026-04-24", "age_days": 4, "price_at_verdict": 7.67, "current_price": 6.79, "drift_pct": -11.5, "direction": "down", "deep_dive_file": "EOSE-2026-04-24"}, {"ticker": "APLD", "verdict": "WATCH", "verdict_date": "2026-04-24", "age_days": 4, "price_at_verdict": 34.98, "current_price": 31.42, "drift_pct": -10.2, "direction": "down", "deep_dive_file": "APLD-2026-04-24"}], "recentFiles": [{"path": "vault/vault-suggestions/wiki-2026-W20.md", "modified": "2026-05-15 23:11", "age": "3m ago", "kind": "vault-suggestions"}, {"path": "vault/price-triggers.md", "modified": "2026-05-15 23:10", "age": "5m ago", "kind": "vault"}, {"path": "vault/deep-dives/_verdicts.md", "modified": "2026-05-15 23:10", "age": "5m ago", "kind": "deep-dives"}, {"path": "vault/deep-dives/VIVO-2026-05-15.md", "modified": "2026-05-15 23:09", "age": "5m ago", "kind": "deep-dives"}, {"path": "vault/notes/RKLB thesis.md", "modified": "2026-05-15 23:04", "age": "11m ago", "kind": "notes"}, {"path": "vault/library/ai-infra-thesis-kill-switches.md", "modified": "2026-05-15 23:03", "age": "12m ago", "kind": "library"}, {"path": "vault/library/Opportunity-cost lens.md", "modified": "2026-05-15 23:03", "age": "12m ago", "kind": "library"}, {"path": "vault/library/Wait-for-deal thesis.md", "modified": "2026-05-15 23:03", "age": "12m ago", "kind": "library"}, {"path": "vault/library/AI Energy Thesis.md", "modified": "2026-05-15 23:02", "age": "12m ago", "kind": "library"}, {"path": "vault/library/warrant-conditionality-equity-announcements.md", "modified": "2026-05-15 23:02", "age": "13m ago", "kind": "library"}, {"path": "vault/library/ai-capex-payback-window.md", "modified": "2026-05-15 23:01", "age": "13m ago", "kind": "library"}, {"path": "vault/vault-suggestions/wiki-2026-W19.md", "modified": "2026-05-15 22:50", "age": "24m ago", "kind": "vault-suggestions"}, {"path": "vault/reports/daily/2026-05-15.md", "modified": "2026-05-15 22:50", "age": "24m ago", "kind": "daily"}, {"path": "vault/deep-dives/NBIS-2026-05-13.md", "modified": "2026-05-15 22:49", "age": "26m ago", "kind": "deep-dives"}, {"path": "vault/ipo-calendar.md", "modified": "2026-05-15 18:32", "age": "4h ago", "kind": "vault"}, {"path": "vault/reports/intraday-alerts/2026-05-15.md", "modified": "2026-05-15 18:32", "age": "4h ago", "kind": "intraday-alerts"}, {"path": "vault/reports/intraday-alerts/news-2026-05-15.md", "modified": "2026-05-15 18:32", "age": "4h ago", "kind": "intraday-alerts"}, {"path": "vault/reports/weekly/2026-W20.md", "modified": "2026-05-15 18:32", "age": "4h ago", "kind": "weekly"}, {"path": "vault/deep-dives/TWST-2026-05-15.md", "modified": "2026-05-15 12:23", "age": "10h ago", "kind": "deep-dives"}, {"path": "vault/!Journalit/2026/Q2/05/W20/trades/CRWV-120526-T1.md", "modified": "2026-05-14 14:23", "age": "1d ago", "kind": "trades"}, {"path": "vault/reports/intraday-alerts/news-2026-05-14.md", "modified": "2026-05-14 14:23", "age": "1d ago", "kind": "intraday-alerts"}, {"path": "vault/watchlist.md", "modified": "2026-05-14 10:23", "age": "1d ago", "kind": "vault"}, {"path": "vault/deep-dives/CBRS-2026-05-14.md", "modified": "2026-05-14 10:23", "age": "1d ago", "kind": "deep-dives"}, {"path": "vault/deep-dives/TEM-2026-05-13.md", "modified": "2026-05-14 09:31", "age": "1d ago", "kind": "deep-dives"}], "news": [{"ticker": "IREN", "severity": "sev 4", "meta": "sev 4 — PUSH — 8-K — material agreement (Item 1.01)", "title": "8-K - Current report", "source": "news-2026-05-14.md", "count": "1"}, {"ticker": "IREN", "severity": "sev 4", "meta": "sev 4 — PUSH — 8-K — other material event (Item 8.01)", "title": "8-K - Current report", "source": "news-2026-05-12.md", "count": "2"}, {"ticker": "IREN", "severity": "sev 4", "meta": "sev 4 — PUSH — M&A — acquirer", "title": "IREN Strikes Agreement To Acquire Spain-Based Data Center Developer Ingenostrum; Financial Terms Undisclosed", "source": "news-2026-05-08.md", "count": "1"}, {"ticker": "CORZ", "severity": "sev 4", "meta": "sev 4 — PUSH — Schedule 13G amendment", "title": "SCHEDULE 13G/A [Amend] - Statement of Beneficial Ownership by Certain Investors", "source": "news-2026-05-15.md", "count": "2"}, {"ticker": "NBIS", "severity": "sev 3", "meta": "sev 3 — Form 4 (insider)", "title": "4 - Statement of changes in beneficial ownership of securities; +1 more", "source": "news-2026-05-15.md", "count": "3"}, {"ticker": "NBIS", "severity": "sev 3", "meta": "sev 3 — Form 4 amendment", "title": "4/A [Amend] - Statement of changes in beneficial ownership of securities", "source": "news-2026-05-15.md", "count": "1"}, {"ticker": "NBIS", "severity": "sev 3", "meta": "sev 3 — Form 144", "title": "144 - Report of proposed sale of securities", "source": "news-2026-05-13.md", "count": "1"}, {"ticker": "IREN", "severity": "sev 3", "meta": "sev 3 — 10-Q filing", "title": "10-Q - Quarterly report [Sections 13 or 15(d)]", "source": "news-2026-05-08.md", "count": "1"}, {"ticker": "IREN", "severity": "sev 3", "meta": "sev 3 — 8-K — earnings release (Item 2.02)", "title": "8-K - Current report", "source": "news-2026-05-08.md", "count": "1"}, {"ticker": "HNGE", "severity": "sev 3", "meta": "sev 3 — Form 4 (insider)", "title": "4 - Statement of changes in beneficial ownership of securities; +2 more", "source": "news-2026-05-12.md", "count": "4"}, {"ticker": "HNGE", "severity": "sev 3", "meta": "sev 3 — Form 144", "title": "144 - Report of proposed sale of securities; +1 more", "source": "news-2026-05-11.md", "count": "3"}, {"ticker": "HNGE", "severity": "sev 3", "meta": "sev 3 — 10-Q filing", "title": "10-Q - Quarterly report [Sections 13 or 15(d)]", "source": "news-2026-05-08.md", "count": "1"}], "dailyActions": [{"action": "run deep-dive IREN", "context": "", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "watch for IPO stabilization toward $185 or first earnings/lockup digestion", "context": "", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "CBRS (Cerebras Systems) — IPO T-0 TD, expected 2026-05-15. No pre-commit plan on file — consider running pre-ipo CBRS.", "context": "Active IPO Windows", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "RKLB — was WATCH at $84.60 on 2026-04-23 (22d ago). Now $124.30 (+46.9%). See RKLB-2026-04-23 — re-evaluate.", "context": "Verdict Drift", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "SNDK — was WATCH at $1,096.51 on 2026-04-30 (15d ago). Now $1,392.74 (+27.0%). See SNDK-2026-04-30 — re-evaluate.", "context": "Verdict Drift", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "LITE — was WATCH at $797.07 on 2026-04-28 (17d ago). Now $957.61 (+20.1%). See LITE-2026-04-28 — re-evaluate.", "context": "Verdict Drift", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "TWST — was WATCH at $60.94 on 2026-04-26 (19d ago). Now $49.06 (-19.5%). See TWST-2026-04-26 — re-evaluate.", "context": "Verdict Drift", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "RIVN — was WATCH at $17.13 on 2026-04-23 (22d ago). Now $13.94 (-18.6%). See RIVN-2026-04-23 — re-evaluate.", "context": "Verdict Drift", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "INTC — was WATCH at $94.48 on 2026-04-30 (15d ago). Now $107.55 (+13.8%). See INTC-2026-04-30 — re-evaluate.", "context": "Verdict Drift", "source": "vault/reports/daily/2026-05-15.md"}, {"action": "run deep-dive NBIS", "context": "Verdict Drift", "source": "vault/reports/daily/2026-05-14.md"}], "focusQueue": [{"type": "Daily action", "ticker": "IREN", "title": "run deep-dive IREN", "detail": " - vault/reports/daily/2026-05-15.md", "priority": "high"}, {"type": "Daily action", "ticker": "IPO", "title": "watch for IPO stabilization toward $185 or first earnings/lockup digestion", "detail": " - vault/reports/daily/2026-05-15.md", "priority": "high"}, {"type": "Daily action", "ticker": "CBRS", "title": "CBRS (Cerebras Systems) — IPO T-0 TD, expected 2026-05-15. No pre-commit plan on file — consider running pre-ipo CBRS.", "detail": "Active IPO Windows - vault/reports/daily/2026-05-15.md", "priority": "high"}, {"type": "sev 4", "ticker": "IREN", "title": "8-K - Current report", "detail": "sev 4 — PUSH — 8-K — material agreement (Item 1.01) - news-2026-05-14.md", "priority": "high"}, {"type": "sev 4", "ticker": "IREN", "title": "8-K - Current report", "detail": "sev 4 — PUSH — 8-K — other material event (Item 8.01) - news-2026-05-12.md", "priority": "high"}, {"type": "sev 4", "ticker": "IREN", "title": "IREN Strikes Agreement To Acquire Spain-Based Data Center Developer Ingenostrum; Financial Terms Undisclosed", "detail": "sev 4 — PUSH — M&A — acquirer - news-2026-05-08.md", "priority": "high"}, {"type": "Earnings", "ticker": "HNGE", "title": "Print 2026-05-05", "detail": "prepped", "priority": "medium"}, {"type": "Earnings", "ticker": "IREN", "title": "Print 2026-05-07", "detail": "prepped", "priority": "medium"}, {"type": "Verdict drift", "ticker": "NBIS", "title": "-13.9% since WATCH", "detail": "NBIS-2026-04-20 - 8d old", "priority": "medium"}, {"type": "Verdict drift", "ticker": "CRWV", "title": "-13.7% since WATCH", "detail": "CRWV-2026-04-22 - 6d old", "priority": "medium"}, {"type": "Verdict drift", "ticker": "CIFR", "title": "-11.5% since WATCH", "detail": "CIFR-2026-04-20 - 8d old", "priority": "medium"}, {"type": "Verdict drift", "ticker": "EOSE", "title": "-11.5% since WATCH", "detail": "EOSE-2026-04-24 - 4d old", "priority": "medium"}], "sourceStamps": [{"path": "vault/watchlist.md", "updated": "2026-05-14 10:23"}, {"path": "vault/price-triggers.md", "updated": "2026-05-15 23:10"}, {"path": "vault/ipo-calendar.md", "updated": "2026-05-15 18:32"}, {"path": "vault/deep-dives/_verdicts.md", "updated": "2026-05-15 23:10"}, {"path": "vault/reports/intraday-alerts/news-2026-05-15.md", "updated": "2026-05-15 18:32"}, {"path": "vault/reports/daily/2026-05-15.md", "updated": "2026-05-15 22:50"}]};
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const rowText = row => Object.values(row || {}).join(" ").toLowerCase();
+    const nonEmpty = value => value && !["-", "--", "---", "\u2014", "TBD"].includes(String(value).trim());
+    const money = value => {
+      const text = String(value ?? "").trim();
+      if (!nonEmpty(text)) return "-";
+      return /^-?\d+(\.\d+)?$/.test(text) ? `$${esc(text)}` : esc(text);
+    };
+    const clamp = value => `<div class="clamp">${esc(value || "")}</div>`;
+    let view = "all";
+    let query = "";
+
+    const flatWatch = Object.values(data.watchlist).flat();
+    const freshResults = [
+      ...(data.triggerSnapshotsFresh.watchlist ? (data.watchState.results || []) : []),
+      ...(data.triggerSnapshotsFresh.broader ? (data.broaderState.results || []) : [])
+    ];
+    const firedCount = freshResults.filter(row => String(row.status || "").startsWith("FIRED")).length;
+
+    function visibleRows(rows) {
+      return rows.filter(row => !query || rowText(row).includes(query));
+    }
+    function tagClass(value) {
+      const text = String(value || "").toLowerCase();
+      if (text.includes("high") || text.includes("sev 4") || text.includes("fired") || text.includes("needs")) return "high";
+      if (text.includes("medium") || text.includes("alert") || text.includes("this week") || text.includes("drift")) return "medium";
+      if (text.includes("hold") || text.includes("add") || text.includes("prepped")) return "green";
+      if (text.includes("ipo") || text.includes("watch") || text.includes("30+")) return "blue";
+      return "";
+    }
+    function table(headers, rows, cells) {
+      if (!rows.length) return `<div class="empty">No matching rows.</div>`;
+      return `<div class="table-wrap"><table><thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${cells(row).join("")}</tr>`).join("")}</tbody></table></div>`;
+    }
+    function applyPanelVisibility() {
+      document.querySelectorAll("[data-panel]").forEach(panel => {
+        panel.classList.toggle("hidden", view !== "all" && panel.dataset.panel !== view);
+      });
+    }
+
+    function render() {
+      const queueRows = visibleRows(data.focusQueue);
+      const positionRows = visibleRows(data.positions);
+      const triggerRows = visibleRows(freshResults.length ? freshResults : data.triggers.map(row => ({...row, status: "set"}))).slice(0, 18);
+      const trancheRows = visibleRows(data.tranches).slice(0, 18);
+      const eventRows = visibleRows([
+        ...data.earnings.map(row => ({kind: "Earnings", ticker: row.ticker, date: row.print_date, status: row.has_pre_earnings_file ? "prepped" : "needs prep", detail: row.pre_earnings_file || `${row.calendar_days_until} calendar days`})),
+        ...data.ipo.map(row => ({kind: "IPO", ticker: row.Ticker, date: row["Expected Date"], status: row.Status, detail: `${row.Company} - ${row["Thesis Fit"]}`}))
+      ]).slice(0, 14);
+      const verdictRows = visibleRows(data.verdicts).slice(0, 12);
+      const fileRows = visibleRows(data.recentFiles).slice(0, 18);
+
+      document.getElementById("subtitle").textContent = `Generated ${data.generatedAt}. Built from canonical vault files with stale trigger snapshots fenced off instead of silently reused.`;
+      document.getElementById("metrics").innerHTML = [
+        ["Queue", queueRows.length, "Items needing attention", "var(--danger)"],
+        ["Core", data.watchlist.Core?.length || 0, "Owned Tier 1 names", "var(--accent)"],
+        ["Triggers", data.triggers.length, firedCount ? `${firedCount} fresh fired` : "Set levels", "var(--warn)"],
+        ["Tranches", data.tranches.length, "Explicit staged plans", "var(--accent-2)"],
+        ["Events", data.earnings.length + data.ipo.length, "Earnings and IPOs", "var(--charcoal)"],
+        ["Files", data.recentFiles.length, `Changed in ${data.recentHours}h`, "#6d756f"],
+      ].map(([label, value, detail, color]) => `<article class="metric" style="--stripe:${color}"><strong>${value}</strong><span>${esc(label)}</span><small>${esc(detail)}</small></article>`).join("");
+
+      document.getElementById("queueCount").textContent = `${queueRows.length} shown`;
+      document.getElementById("queue").innerHTML = queueRows.length ? queueRows.map((row, index) => `
+        <article class="card ${index === 0 ? "featured" : ""}">
+          <div class="row"><span class="ticker">${esc(row.ticker)}</span><span class="pill ${tagClass(row.priority || row.type)}">${esc(row.type)}</span></div>
+          <div class="title">${esc(row.title)}</div>
+          <div class="detail">${esc(row.detail)}</div>
+        </article>`).join("") : `<div class="empty">No matching action items.</div>`;
+
+      document.getElementById("positionCount").textContent = `${positionRows.length} shown`;
+      document.getElementById("positions").innerHTML = positionRows.length ? positionRows.map(row => `
+        <article class="card position-card">
+          <div class="row"><span class="ticker">${esc(row.ticker)}</span><span class="pill ${tagClass(row.verdict)}">${esc(row.verdict)}</span></div>
+          <div class="title">${esc(row.company)}</div>
+          <div class="detail">${esc(row.thesis)}</div>
+          <div class="level-grid">
+            <div class="level"><span>Buy</span><strong>${money(row.buy)}</strong></div>
+            <div class="level"><span>Trim</span><strong>${money(row.trim)}</strong></div>
+            <div class="level"><span>Plans</span><strong>${esc(row.tranches)}</strong></div>
+          </div>
+          <div class="muted">${esc(row.tier)} - verdict ${esc(row.verdictDate || "unlogged")} ${row.priceAtVerdict ? `at ${esc(row.priceAtVerdict)}` : ""}</div>
+        </article>`).join("") : `<div class="empty">No matching positions.</div>`;
+
+      document.getElementById("triggerCount").textContent = freshResults.length ? "fresh snapshot" : "definitions";
+      document.getElementById("triggers").innerHTML = table(["Ticker", "State", "Buy", "Trim", "Reviewed", "Note"], triggerRows, row => [
+        `<td><strong>${esc(row.ticker || row.Ticker)}</strong><br><span class="muted">${esc(row.label || row.Scope || "")}</span></td>`,
+        `<td><span class="pill ${tagClass(row.status)}">${esc(row.status)}</span></td>`,
+        `<td>${money(row.buy_below ?? row["Buy Below"])}</td>`,
+        `<td>${money(row.trim_above ?? row["Trim Above"])}</td>`,
+        `<td>${esc(row.last_reviewed ?? row["Last Reviewed"] ?? "")}</td>`,
+        `<td>${clamp(row.note ?? row.Note)}</td>`
+      ]);
+
+      document.getElementById("trancheCount").textContent = `${trancheRows.length} shown`;
+      document.getElementById("tranches").innerHTML = table(["Ticker", "Action", "Size", "At", "Expires", "Order", "Note"], trancheRows, row => [
+        `<td><strong>${esc(row.Ticker)}</strong></td>`,
+        `<td><span class="pill ${tagClass(row.Action)}">${esc(row.Action)}</span></td>`,
+        `<td>${esc(row.Size)}</td>`,
+        `<td>${money(row["At Price"])}</td>`,
+        `<td>${esc(row.Expires)}</td>`,
+        `<td>${esc(row.Order)}</td>`,
+        `<td>${clamp(row.Note)}</td>`
+      ]);
+
+      document.getElementById("eventCount").textContent = `${eventRows.length} shown`;
+      document.getElementById("events").innerHTML = table(["Name", "Date", "Status", "Detail"], eventRows, row => [
+        `<td><strong>${esc(row.ticker)}</strong><br><span class="muted">${esc(row.kind)}</span></td>`,
+        `<td>${esc(row.date)}</td>`,
+        `<td><span class="pill ${tagClass(row.status)}">${esc(row.status)}</span></td>`,
+        `<td>${clamp(row.detail)}</td>`
+      ]);
+
+      document.getElementById("verdictCount").textContent = `${verdictRows.length} recent`;
+      document.getElementById("verdicts").innerHTML = table(["Ticker", "Verdict", "Date", "Price"], verdictRows, row => [
+        `<td><strong>${esc(row.Ticker)}</strong></td>`,
+        `<td><span class="pill ${tagClass(row.Verdict)}">${esc(row.Verdict)}</span></td>`,
+        `<td>${esc(row.Date)}</td>`,
+        `<td>${esc(row["Price at verdict"])}</td>`
+      ]);
+
+      document.getElementById("fileCount").textContent = `last ${data.recentHours}h`;
+      document.getElementById("files").innerHTML = table(["File", "Modified", "Age"], fileRows, row => [
+        `<td>${esc(row.path)}</td>`,
+        `<td>${esc(row.modified)}</td>`,
+        `<td><span class="pill">${esc(row.age)}</span></td>`
+      ]);
+
+      const notices = [];
+      if (!data.triggerSnapshotsFresh.watchlist) notices.push("Watchlist trigger snapshot is older than vault/watchlist.md, so the dashboard is showing trigger definitions rather than stale fired-state rows.");
+      if (!data.triggerSnapshotsFresh.broader) notices.push("Broader trigger snapshot is older than vault/price-triggers.md, so opportunistic trigger state is treated as informational only.");
+      document.getElementById("system").innerHTML = [
+        ...notices.map(text => `<div class="notice">${esc(text)}</div>`),
+        ...data.sourceStamps.map(row => `<div class="source"><span>${esc(row.path)}</span><strong>${esc(row.updated)}</strong></div>`)
+      ].join("");
+      applyPanelVisibility();
+    }
+
+    document.querySelectorAll(".tab").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab === button));
+        view = button.dataset.view;
+        applyPanelVisibility();
+      });
+    });
+    document.getElementById("search").addEventListener("input", event => {
+      query = event.target.value.trim().toLowerCase();
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>
